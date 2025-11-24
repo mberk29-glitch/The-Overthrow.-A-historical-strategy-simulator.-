@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hawaiʻi Overthrow — CYOA Strategy (Hybrid Role Paths)</title>
+
+<style>
+  :root{
+    --bg:#fff8ee;
+    --panel:#fffdf8;
+    --accent:#0f6a72;
+    --muted:#546565;
+    --good:#2a9d8f;
+    --bad:#d9534f;
+
+    /* Tropical warms */
+    --sun:#f4a72f;
+    --sand:#f7e4b1;
+    --leaf:#3fa964;
+    --lightleaf:#e6f7ea;
+    --coral:#ff7a5a;
+    --sea:#0b808f;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background:linear-gradient(180deg,var(--sand),var(--bg));
+    color:#111;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:1100px;margin:18px auto;padding:18px}
+
+  header{display:flex;gap:16px;align-items:center}
+  h1{margin:0;color:var(--accent);font-size:28px}
+  p.lead{margin:0;color:var(--muted);font-size:14px}
+
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-top:14px}
+
+  .panel{
+    background:var(--panel);
+    border-radius:12px;padding:14px;
+    box-shadow:0 10px 30px rgba(7,50,52,0.07);
+    border:1px solid rgba(0,0,0,0.03);
+  }
+
+  .left{min-height:700px}
+  .top{display:flex;justify-content:space-between;align-items:center}
+  .top strong{font-size:15px}
+
+  .status{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .stat{background:linear-gradient(180deg,#fff,#fcf9ec);padding:8px;border-radius:8px;min-width:120px;border:1px solid rgba(0,0,0,0.03)}
+  .stat strong{display:block;font-size:18px}
+
+  .scene{margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff8ec);min-height:420px;position:relative;overflow:hidden;border:2px solid rgba(244,167,47,0.12)}
+  .scene .art{display:flex;gap:14px;align-items:flex-start;height:100%}
+  .portrait{width:190px;flex:0 0 190px}
+  .portrait .avatar{width:100%;height:190px;border-radius:10px;background:linear-gradient(135deg,var(--sea),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px;border:3px solid rgba(255,255,255,0.12)}
+  .bubble{background:rgba(255,255,255,0.98);padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(11,85,96,0.06);max-width:100%;border-left:6px solid var(--sun);}
+
+  .narr-title{font-weight:800;color:var(--coral);margin:0 0 8px 0}
+  .narr-sub{color:var(--muted);margin:0 0 12px 0;font-size:13px}
+
+  .choices{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+  button.choice{
+    background:linear-gradient(180deg,var(--leaf),#2e7e50);
+    color:#fff;border:0;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;border:2px solid rgba(255,255,255,0.06);text-align:left;
+  }
+  button.choice small{display:block;font-weight:600;opacity:0.95}
+
+  .choice.meta-sun{background:linear-gradient(180deg,var(--sun),#f2b62b);color:#2b2b2b}
+  .choice.meta-coral{background:linear-gradient(180deg,var(--coral),#ff6a45);color:white}
+
+  .controls{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  button.secondary{background:#fff;border:2px solid var(--leaf);padding:10px;border-radius:8px;cursor:pointer;color:var(--accent);font-weight:700}
+  button.secondary:disabled{opacity:0.45;cursor:not-allowed}
+
+  .right .log{height:320px;overflow:auto;padding:10px;border-radius:8px;background:#fffefb;border:2px solid rgba(244,167,47,0.12)}
+  .right ul{padding-left:18px;margin:8px 0;color:var(--muted)}
+  .endings strong{color:var(--accent)}
+
+  .small-muted{font-size:12px;color:var(--muted)}
+
+  footer{margin-top:12px;font-size:12px;color:var(--muted)}
+  @media (max-width:980px){
+    .layout{grid-template-columns:1fr}
+    .portrait{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div style="flex:1">
+      <h1>Hawaiʻi 1892–1893 — Choose Your Role & Strategy</h1>
+      <p class="lead">A historically-inspired choose-your-own-adventure. Each role follows a mostly shared path but branches for role-specific events, then reunites for the final crisis.</p>
+    </div>
+    <div style="text-align:right">
+      <div class="small-muted">10 turns • Multiple role routes • Historical themes</div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main class="panel left" id="main">
+      <div class="top">
+        <div><strong>Turn <span id="turn">0</span> / 10</strong></div>
+        <div><strong id="statusLabel">Game status</strong><div class="small-muted" id="roleName"></div></div>
+      </div>
+
+      <div id="setup" style="margin-top:12px">
+        <h3 style="margin:0 0 8px 0">Select a Role — Read the short brief and start</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+          <div style="width:260px;padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fff9ef);border:1px solid rgba(0,0,0,0.03)">
+            <strong>Native Hawaiian Student</strong>
+            <p class="small-muted">Witness the cultural and civic disruption at the community level. You focus on grassroots organizing and preserving language & schools.</p>
+            <button class="secondary" data-role="student">Play as Student</button>
+          </div>
+
+          <div style="width:260px;padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fff9ef);border:1px solid rgba(0,0,0,0.03)">
+            <strong>Sugar-industry Businessman</strong>
+            <p class="small-muted">Prioritize economic stability and property interests. Your choices tilt toward trade, tariffs, and foreign relations.</p>
+            <button class="secondary" data-role="business">Play as Businessman</button>
+          </div>
+
+          <div style="width:260px;padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fff9ef);border:1px solid rgba(0,0,0,0.03)">
+            <strong>Queen Liliʻuokalani</strong>
+            <p class="small-muted">Lead the monarchy through diplomatic and constitutional crises. Choices will be political and legal in nature.</p>
+            <button class="secondary" data-role="liliuokalani">Play as Queen</button>
+          </div>
+
+          <div style="width:260px;padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fff9ef);border:1px solid rgba(0,0,0,0.03)">
+            <strong>Hawaiian Government Official</strong>
+            <p class="small-muted">Balance legality, negotiation, and international pressure while trying to protect sovereignty.</p>
+            <button class="secondary" data-role="official">Play as Official</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gameArea" style="display:none">
+        <div class="status">
+          <div class="stat">Land<br><strong id="landVal">80</strong></div>
+          <div class="stat">Economy<br><strong id="econVal">70</strong></div>
+          <div class="stat">Public Support<br><strong id="supVal">75</strong></div>
+          <div class="stat">Military<br><strong id="milVal">20</strong></div>
+          <div class="stat">Culture<br><strong id="culVal">85</strong></div>
+        </div>
+
+        <section class="scene" id="scene">
+          <div class="art">
+            <div class="portrait">
+              <div class="avatar" id="portraitBox">YOU</div>
+            </div>
+
+            <div style="flex:1">
+              <div class="bubble">
+                <div class="narr-title" id="sceneTitle">Welcome</div>
+                <div class="narr-sub" id="sceneSub">Scene subtitle or date</div>
+                <div id="narrative">Welcome. Choose actions to influence the kingdom's fate. Each role will see some unique scenes and options.</div>
+                <div class="choices" id="choices"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="controls">
+          <button class="secondary" id="inspectDoc">Inspect Document</button>
+          <button class="secondary" id="charSpeech">Short Speech</button>
+          <button class="secondary" id="endTurn">End Turn</button>
+          <button class="secondary" id="undoBtn" disabled>Undo</button>
+          <button class="secondary" id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="panel right">
+      <strong>Turn log</strong>
+      <div class="log" id="log"></div>
+
+      <div style="margin-top:12px">
+        <strong>Possible Endings</strong>
+        <ul class="endings">
+          <li><strong>Preserved Monarchy</strong> — The kingdom maintains sovereignty and culture flourishes.</li>
+          <li>Overthrow — The monarchy is removed and control shifts.</li>
+          <li>Business Dominance — Economy wins at cultural cost.</li>
+          <li>Compromised Sovereignty — Partial loss of independence after concessions.</li>
+          <li>Immediate Overthrow — A short path to loss of sovereignty.</li>
+        </ul>
+      </div>
+
+      <footer style="margin-top:10px">
+        <div class="small-muted">Tip: Use Undo to revert the last choice. Choices and random events will shape risk and outcomes.</div>
+      </footer>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* -------------------------
+   Hybrid Role-Branching Game
+   ------------------------- */
+
+const ROLES = {
+  student:{key:'student', name:'Native Hawaiian Student', modifiers:{culture:6,support:6,economy:-4}},
+  business:{key:'business', name:'Sugar-industry Businessman', modifiers:{economy:10,land:-8,culture:-6}},
+  liliuokalani:{key:'liliuokalani', name:'Queen Liliʻuokalani', modifiers:{culture:10,support:8,economy:-6}},
+  official:{key:'official', name:'Government Official', modifiers:{support:4,culture:4,economy:-3}}
+};
+
+let game = {
+  roleKey:null,
+  role:null,
+  turn:0, maxTurns:10,
+  land:80, economy:70, support:75, military:20, culture:85, risk:10,
+  lastSnapshot:null, gameOver:false
+};
+
+const turnEl = document.getElementById("turn");
+const landEl = document.getElementById("landVal");
+const econEl = document.getElementById("econVal");
+const supEl = document.getElementById("supVal");
+const milEl = document.getElementById("milVal");
+const culEl = document.getElementById("culVal");
+const narrativeEl = document.getElementById("narrative");
+const sceneTitleEl = document.getElementById("sceneTitle");
+const sceneSubEl = document.getElementById("sceneSub");
+const choicesEl = document.getElementById("choices");
+const logEl = document.getElementById("log");
+const portraitBox = document.getElementById("portraitBox");
+const setupDiv = document.getElementById("setup");
+const gameArea = document.getElementById("gameArea");
+const roleNameEl = document.getElementById("roleName");
+
+function clamp(v){ return Math.max(0, Math.min(100, Math.round(v))); }
+function snapshot(){ game.lastSnapshot = JSON.parse(JSON.stringify(game)); document.getElementById("undoBtn").disabled = false; }
+function log(msg, title){
+  const p = document.createElement("p");
+  if(title) p.innerHTML = `<strong>${title}</strong> — ${msg}`;
+  else p.textContent = msg;
+  logEl.prepend(p);
+}
+function setUI(){
+  turnEl.textContent = game.turn;
+  landEl.textContent = clamp(game.land);
+  econEl.textContent = clamp(game.economy);
+  supEl.textContent = clamp(game.support);
+  milEl.textContent = clamp(game.military);
+  culEl.textContent = clamp(game.culture);
+  roleNameEl.textContent = game.role ? game.role.name : '';
+}
+
+/* -------------------------
+   SCENE DEFINITIONS
+   Structure:
+   - sharedStart: turns 1-2 (indices 0-1)
+   - roleRoutes: turns 3-8 (6 turns) for each role
+   - sharedEnd: turns 9-10 (indices 0-1 in that array)
+   Each scene object: {id, title, sub, textByRole, choicesByRole}
+   choices: array of {label, desc, effect:{...}, next: null}
+------------------------- */
+
+/* SHARED START SCENES (turns 1-2) */
+const SHARED_START = [
+  {
+    id:'start_pressure',
+    title:'Winter 1892 — Growing International Pressure',
+    sub:'Reports from Honolulu, economic concerns, and foreign diplomats.',
+    textByRole: {
+      any: 'The islands are unusually tense. Merchants push for stability; citizens worry about foreign influence. What will you prioritize first?'
+    },
+    choicesByRole: {
+      any:[
+        {label:'Meet community leaders', desc:'Hear concerns from families and kupuna.', effect:{support:+6,culture:+4}, next:null},
+        {label:'Open talks with foreign merchants', desc:'Protect trade relations and sugar prices.', effect:{economy:+6, support:-3}, next:null},
+        {label:'Call for calm and legal review', desc:'Emphasize due process and law.', effect:{support:+2,risk:-2}, next:null}
+      ]
+    }
+  },
+  {
+    id:'rumors',
+    title:'Late 1892 — Rumors and Factionalism',
+    sub:'Whispers of a Committee and possible land purchases circulate.',
+    textByRole:{
+      any:'Rumors spread that a committee of powerful interests is organizing. Newspapers carry heated editorials.'
+    },
+    choicesByRole:{
+      student:[
+        {label:'Organize a student circle', desc:'Coordinate petitions and education events.', effect:{support:+6,culture:+4}, next:null},
+        {label:'Focus on studies and safety', desc:'Avoid public action for now.', effect:{support:-2,culture:0}, next:null}
+      ],
+      business:[
+        {label:'Convene shareholders', desc:'Align plan with other planters and businessmen.', effect:{economy:+8,land:-6}, next:null},
+        {label:'Lobby diplomats quietly', desc:'Use connections to stabilize trade.', effect:{economy:+4,risk:-3}, next:null}
+      ],
+      liliuokalani:[
+        {label:'Summon a royal council', desc:'Hear counsel from ministers and advisors.', effect:{support:+4,culture:+6}, next:null},
+        {label:'Delay any decisions publicly', desc:'Buy a little time for diplomacy.', effect:{risk:-2,support:-2}, next:null}
+      ],
+      official:[
+        {label:'Request diplomatic clarification', desc:'Contact foreign envoys for clarity.', effect:{support:+2,risk:-2,economy:-2}, next:null},
+        {label:'Draft emergency legal memorandum', desc:'Prepare for potential legal challenges.', effect:{culture:+3,risk:-1}, next:null}
+      ]
+    }
+  }
+];
+
+/* ROLE-SPECIFIC MIDDLE ROUTES (turns 3-8 = 6 turns) */
+const ROLE_ROUTES = {
+  student:[
+    {id:'student1', title:'Classes Interrupted', sub:'Students gather, rumors in lecture halls.',
+     text:'Students meet to share news. How will you channel youthful energy?',
+     choices:[
+       {label:'Lead a cultural petition', desc:'Protect language classes and kapu traditions.', effect:{culture:+8,support:+6}, next:null},
+       {label:'Organize peaceful march', desc:'Raise awareness, risk a crackdown.', effect:{support:+6,risk:+6}, next:null},
+       {label:'Keep activities low-key', desc:'Protect classmates from reprisals.', effect:{support:-2,culture:+2}, next:null}
+     ]},
+    {id:'student2', title:'Community Networks', sub:'Local churches and schools weigh in.',
+     text:'Community leaders ask the youth to help gather affidavits and petitions.',
+     choices:[
+       {label:'Collect signatures', desc:'Build an undeniable record of support.', effect:{support:+8,culture:+4}, next:null},
+       {label:'Train first-aid and safety', desc:'Practical help if tensions rise.', effect:{culture:+4,military:+2}, next:null},
+       {label:'Send delegations to ministers', desc:'Try institutional channels.', effect:{support:+2,economy:-2}, next:null}
+     ]},
+    {id:'student3', title:'Rumors of Troops', sub:'Reports of neutral troop landings appear.',
+     text:'News spreads that foreign troops may arrive claiming neutrality.',
+     choices:[
+       {label:'Use press to explain peaceful aims', desc:'Shape narrative to avoid panic.', effect:{support:+4,risk:-3}, next:null},
+       {label:'Mobilize neighborhood watches', desc:'Non-violent vigilance.', effect:{culture:+2,military:+6,risk:+3}, next:null},
+       {label:'Call for prayers and vigils', desc:'Cultural solidarity.', effect:{culture:+6,support:+2}, next:null}
+     ]},
+    {id:'student4', title:'Economic Anxiety Hits Families', sub:'Families worry about jobs and land.',
+     text:'As job stability wavers, families pressure students to consider their futures.',
+     choices:[
+       {label:'Organize mutual-aid', desc:'Support families financially and socially.', effect:{support:+6,economy:-6}, next:null},
+       {label:'Encourage emigration', desc:'Some think leaving is safest.', effect:{support:-6,economy:-4}, next:null},
+       {label:'Press for land protections', desc:'Defend family land holdings.', effect:{land:+6,culture:+4}, next:null}
+     ]},
+    {id:'student5', title:'Legal Petitions Filed', sub:'Groups petition government to act.',
+     text:'Legal petitions may influence official decisions if delivered carefully.',
+     choices:[
+       {label:'File a public petition', desc:'Go through lawful channels.', effect:{support:+4,risk:-2}, next:null},
+       {label:'Expose covert plots to press', desc:'Risk retaliation but reveal truths.', effect:{support:+8,risk:+8}, next:null},
+       {label:'Work with foreign sympathizers quietly', desc:'Seek allies abroad.', effect:{economy:+3,risk:+4}, next:null}
+     ]},
+    {id:'student6', title:'Preparing the Community', sub:'Communities prepare for potential disruptions.',
+     text:'You must decide whether to prepare for confrontation or continue non-violent resistance.',
+     choices:[
+       {label:'Deepen nonviolent organizing', desc:'Mass civil resistance techniques.', effect:{support:+8,risk:+6}, next:null},
+       {label:'Help arm a small militia (secret)', desc:'Dangerous but may deter force.', effect:{military:+10,economy:-8,risk:+12}, next:null},
+       {label:'Negotiate safe evacuations for families', desc:'Prioritize safety.', effect:{support:+2,culture:+2,economy:-4}, next:null}
+     ]}
+  ],
+
+  business:[
+    {id:'biz1', title:'Boardroom Strategy', sub:'Planter interests coordinate.',
+     text:'Plantation owners weigh tariffs and annexation rumors.',
+     choices:[
+       {label:'Push for tariff relief deals', desc:'Short-term profit.', effect:{economy:+8}, next:null},
+       {label:'Fund a political committee', desc:'Organize an influential committee.', effect:{risk:+8,economy:+4}, next:null},
+       {label:'Avoid public moves', desc:'Lay low to minimize resistance.', effect:{support:-3,economy:+2}, next:null}
+     ]},
+    {id:'biz2', title:'Foreign Diplomatic Channels', sub:'Merchants meet envoys and consuls.',
+     text:'Business interests use diplomatic channels to secure favorable policies.',
+     choices:[
+       {label:'Lobby embassy contacts', desc:'Influence foreign ministers.', effect:{economy:+6,risk:+4}, next:null},
+       {label:'Sign trade concessions', desc:'Concessions to maintain access.', effect:{economy:+10,land:-6}, next:null},
+       {label:'Public relations campaign', desc:'Win public sympathy.', effect:{support:+4,economy:-2}, next:null}
+     ]},
+    {id:'biz3', title:'Property and Contracts', sub:'Land deals create tension.',
+     text:'Speculators move to secure land through legal and extra-legal means.',
+     choices:[
+       {label:'Secure titles aggressively', desc:'Protect investments.', effect:{land:-6,economy:+6,risk:+6}, next:null},
+       {label:'Propose fair purchase plans', desc:'Reduce friction with locals.', effect:{support:+4,economy:-4,culture:-3}, next:null},
+       {label:'Call for foreign troop assistance', desc:'Dangerous escalation.', effect:{military:+12,risk:+14}, next:null}
+     ]},
+    {id:'biz4', title:'Market Panic', sub:'Markets wobble with threats of intervention.',
+     text:'Sugar prices dip and there are calls for immediate stabilization.',
+     choices:[
+       {label:'Cut prices to secure buyers', desc:'Short-term stability.', effect:{economy:+4,support:-2}, next:null},
+       {label:'Coordinate industry-wide strike', desc:'Strong, risky measure.', effect:{economy:-8,risk:+8,support:-6}, next:null},
+       {label:'Invite neutral observers to inspect ports', desc:'Bring legitimacy.', effect:{support:+3,risk:-3}, next:null}
+     ]},
+    {id:'biz5', title:'Public Backlash', sub:'Community groups protest certain deals.',
+     text:'Public anger at land losses may spark wider unrest.',
+     choices:[
+       {label:'Hold a public forum', desc:'Explain your actions transparently.', effect:{support:+6,economy:-3}, next:null},
+       {label:'Use private security forces', desc:'Suppress protests.', effect:{military:+8,support:-8,risk:+12}, next:null},
+       {label:'Negotiate community benefits', desc:'Offer long-term support.', effect:{support:+4,economy:-4}, next:null}
+     ]},
+    {id:'biz6', title:'Decision Day for Owners', sub:'A decisive vote among businessmen approaches.',
+     text:'Business leaders must choose whether to push harder or seek compromise.',
+     choices:[
+       {label:'Back a political takeover', desc:'Risk everything to secure property.', effect:{risk:+18,land:-12,economy:+10}, next:null},
+       {label:'Accept regulated concessions', desc:'Trade power for stability.', effect:{economy:+4,land:-6,support:+2}, next:null},
+       {label:'Form a public-private commission', desc:'Shared governance approach.', effect:{support:+4,risk:-4}, next:null}
+     ]},
+  ],
+
+  liliuokalani:[
+    {id:'queen1', title:'Royal Council in Session', sub:'Ministers and advisors convene.',
+     text:'The palace debates how to respond to growing pressure from foreign interests.',
+     choices:[
+       {label:'Issue a public defense of the constitution', desc:'Assert royal authority.', effect:{support:+6,culture:+6,risk:+6}, next:null},
+       {label:'Seek legal arbitration with foreign envoys', desc:'Use law and diplomacy.', effect:{risk:-4,support:+2}, next:null},
+       {label:'Make quiet concessions to calm markets', desc:'Preserve peace at some cost.', effect:{economy:+4,culture:-4}, next:null}
+     ]},
+    {id:'queen2', title:'Royal Edict Consideration', sub:'A proposed temporary transfer is drafted.',
+     text:'Advisors present a draft document proposing temporary authority transfer under certain safeguards.',
+     choices:[
+       {label:'Refuse to sign any transfer', desc:'Stand on principle.', effect:{support:+6,risk:-6}, next:null},
+       {label:'Temporarily delegate limited powers', desc:'A risky compromise.', effect:{risk:+10,support:-4,land:-6}, next:null},
+       {label:'Publicly expose any secret plotting', desc:'Bring covert plans to light.', effect:{support:+8,risk:+8}, next:null}
+     ]},
+    {id:'queen3', title:'Negotiations with Envoys', sub:'Diplomacy intensifies.',
+     text:'Foreign ministers press for guarantees and protections for their citizens.',
+     choices:[
+       {label:'Negotiate strong legal protections', desc:'Aim for enforceable guarantees.', effect:{risk:-6,support:-2,economy:-2}, next:null},
+       {label:'Refuse foreign oversight', desc:'Reassert sovereignty.', effect:{support:+4,risk:+8}, next:null},
+       {label:'Offer trade concessions instead', desc:'Ease tensions with commerce.', effect:{economy:+6,culture:-4}, next:null}
+     ]},
+    {id:'queen4', title:'Palace Security Concerns', sub:'Rumors of military support for committee.',
+     text:'Reports suggest an organized group is ready to act with foreign support.',
+     choices:[
+       {label:'Order palace guards to remain visible', desc:'Deter intimidation.', effect:{military:+6,support:-2}, next:null},
+       {label:'Call for neutral mediators', desc:'Invite third-party oversight.', effect:{risk:-6,support:-2}, next:null},
+       {label:'Prepare royal proclamations', desc:'Clarify authority publicly.', effect:{culture:+4,support:+4}, next:null}
+     ]},
+    {id:'queen5', title:'Legal Counsel Urges Patience', sub:'Lawyers present constitutional options.',
+     text:'Complex legal options are debated within the palace chambers.',
+     choices:[
+       {label:'Pursue bold constitutional reform', desc:'Change the rules, risk backlash.', effect:{culture:+6,risk:+8}, next:null},
+       {label:'Follow incremental legal measures', desc:'Safer but slower.', effect:{risk:-2,support:-2}, next:null},
+       {label:'Seek popular referendum', desc:'Put decision to the people.', effect:{support:+8,economy:-4}, next:null}
+     ]},
+    {id:'queen6', title:'Final Royal Choice', sub:'A high-stakes decision approaches.',
+     text:'The Queen must decide whether to stand firm, compromise, or seek international arbitration.',
+     choices:[
+       {label:'Stand firm and defend monarchy', desc:'Risk direct confrontation.', effect:{support:+4,risk:+12}, next:null},
+       {label:'Compromise on limited powers', desc:'Avoid immediate conflict.', effect:{risk:-8,support:-4,land:-6}, next:null},
+       {label:'Request arbitration by a neutral power', desc:'Hope for fair outcome.', effect:{risk:-2,economy:-2}, next:null}
+     ]}
+  ],
+
+  official:[
+    {id:'off1', title:'Diplomatic Noise', sub:'Consuls demand clarity about property and citizens.',
+     text:'Officials must balance legal standing and foreign pressure.',
+     choices:[
+       {label:'Send formal protest to the consul', desc:'Assert legal objections.', effect:{support:+2,risk:-2}, next:null},
+       {label:'Negotiate quietly to avoid headlines', desc:'De-escalation by diplomacy.', effect:{risk:-4,economy:-2}, next:null},
+       {label:'Consult with local jurists', desc:'Legal robustness.', effect:{culture:+4,support:+2}, next:null}
+     ]},
+    {id:'off2', title:'Collecting Evidence', sub:'Record land titles and contracts carefully.',
+     text:'Proper documentation may protect citizens and the government later.',
+     choices:[
+       {label:'Audit land records', desc:'Expose irregularities.', effect:{land:+6,culture:+2}, next:null},
+       {label:'Leave records as-is to avoid confrontation', desc:'Short-term calm.', effect:{support:-3}, next:null},
+       {label:'Publish a white paper on reforms', desc:'Inform the public.', effect:{support:+4,economy:-2}, next:null}
+     ]},
+    {id:'off3', title:'International Observers Request', sub:'Foreign observers offer to monitor ports.',
+     text:'Observers could reduce risk of direct intervention or be used as cover.',
+     choices:[
+       {label:'Welcome observers publicly', desc:'Transparency to build trust.', effect:{support:+4,risk:-4}, next:null},
+       {label:'Refuse observers', desc:'Protect sovereignty.', effect:{support:-2,risk:+6}, next:null},
+       {label:'Negotiate strict observer rules', desc:'Limit scope.', effect:{risk:-2,support:+1}, next:null}
+     ]},
+    {id:'off4', title:'Legal Challenge Looms', sub:'A planned document may transfer powers temporarily.',
+     text:'Officials must decide whether to accept, reject, or expose the document.',
+     choices:[
+       {label:'Refuse document and publicize it', desc:'Expose the plan.', effect:{support:+6,risk:-6}, next:null},
+       {label:'Recommend cautious signature to avoid conflict', desc:'A compromise.', effect:{risk:+10,support:-6,land:-6}, next:null},
+       {label:'Seek external legal review', desc:'Add legitimacy.', effect:{culture:+4,risk:-2}, next:null}
+     ]},
+    {id:'off5', title:'Mobilization of Local Forces', sub:'Whether to ready militia or stand down.',
+     text:'The official balance between deterrence and escalation.',
+     choices:[
+       {label:'Mobilize militia cautiously', desc:'Show resolve without provocation.', effect:{military:+8,risk:+6,support:-4}, next:null},
+       {label:'Keep forces discreetly on alert', desc:'Avoid public alarm.', effect:{military:+4,risk:+2}, next:null},
+       {label:'Order stand-down and seek mediation', desc:'De-escalation choice.', effect:{support:+2,risk:-4}, next:null}
+     ]},
+    {id:'off6', title:'Final Legal Recommendation', sub:'A decisive legal path is recommended to the crown.',
+     text:'Which legal path will the government choose?',
+     choices:[
+       {label:'Recommend full refusal of any transfer', desc:'Defend sovereignty.', effect:{support:+6,risk:-8}, next:null},
+       {label:'Recommend conditional transfer with oversight', desc:'A middle path.', effect:{risk:+8,support:-4}, next:null},
+       {label:'Recommend immediate concessions to stabilize economy', desc:'Short-term calm.', effect:{economy:+6,land:-6,support:-6}, next:null}
+     ]}
+  ]
+};
+
+/* SHARED END SCENES (turns 9-10) */
+const SHARED_END = [
+  {
+    id:'final_push',
+    title:'Early 1893 — The Final Push',
+    sub:'A decisive sequence of events accelerates toward a resolution.',
+    textByRole:{
+      any:'A powerful faction makes a decisive move. Your earlier choices and the rising risk determine how the final conflicts unfold.'
+    },
+    choicesByRole:{
+      any:[
+        {label:'Negotiate a broad compromise', desc:'Seek a negotiated settlement protecting core rights.', effect:{support:+6,risk:-6}, next:null},
+        {label:'Stand publicly and call for international arbitration', desc:'Put the issue on the world stage.', effect:{support:+4,risk:+10}, next:null},
+        {label:'Refuse any concession and mobilize all resources', desc:'All-in defense.', effect:{military:+12,risk:+18,support:-8}, next:null}
+      ]
+    }
+  },
+  {
+    id:'ending_confrontation',
+    title:'Confrontation and Resolution',
+    sub:'Events come to a head — outcomes rely on support, economy, culture, and risk.',
+    textByRole:{any:'This turn resolves the arc. Finalize the single high-stakes choice that determines the ending.'},
+    choicesByRole:{
+      any:[
+        {label:'Accept an internationally brokered compromise', desc:'Lose some autonomy, retain core cultural protections.', effect:{land:-8,economy:+4,support:-4}, next:null},
+        {label:'Fight to preserve full sovereignty', desc:'High-risk path with cultural upside.', effect:{risk:+20,support:+6,military:+6}, next:null},
+        {label:'Resign or yield authority to a provisional government', desc:'Immediate transfer leading toward overthrow.', effect:{risk:+30,land:-20,support:-20,culture:-10}, next:null}
+      ]
+    }
+  }
+];
+
+/* Utility: determine scene object for current turn */
+function getSceneForTurn(turn){
+  // turns 1..10
+  if(turn<=2){
+    return SHARED_START[turn-1];
+  } else if(turn>=3 && turn<=8){
+    // role-specific: map turn 3->index0 ... turn8->index5
+    const idx = turn - 3;
+    const route = ROLE_ROUTES[game.roleKey];
+    return route && route[idx] ? route[idx] : {id:'missing', title:'(No scene)', sub:'', text:'No scene found', choices:[]};
+  } else {
+    // turns 9-10
+    return SHARED_END[turn-9];
+  }
+}
+
+/* Render functions */
+function renderPortrait(){
+  portraitBox.textContent = game.role ? game.role.name : 'YOU';
+}
+
+function renderScene(){
+  if(game.gameOver) return;
+  const scene = getSceneForTurn(game.turn);
+  // Title/sub
+  sceneTitleEl.textContent = scene.title || 'Scene';
+  sceneSubEl.textContent = scene.sub || '';
+  // Narrative text: support role-specific text fields
+  let narrativeText = '';
+  if(scene.textByRole){
+    narrativeText = scene.textByRole.any || scene.textByRole[game.roleKey] || scene.textByRole[game.role?.key] || '';
+  } else {
+    narrativeText = scene.text || scene.textByRole?.any || '';
+  }
+  narrativeEl.textContent = narrativeText;
+
+  // Render choices depending on role
+  choicesEl.innerHTML = '';
+  let choices = [];
+  if(scene.choicesByRole){
+    choices = scene.choicesByRole.any || scene.choicesByRole[game.roleKey] || [];
+  } else if(scene.choices){
+    // role-specific scene uses "choices" universal for that role scene
+    choices = scene.choices || [];
+  } else if(scene.choicesByRole === undefined && scene.choices === undefined){
+    choices = [];
+  }
+
+  // Provide different visual for some choices
+  choices.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    // flavor: last choices can be highlighted
+    if(i===0) b.classList.add('meta-sun');
+    else if(i===1) b.classList.add('meta-coral');
+
+    b.innerHTML = `<strong>${c.label}</strong><small>${c.desc || ''}</small>`;
+    b.onclick = () => chooseOption(c);
+    choicesEl.appendChild(b);
+  });
+
+  // If no choices (shouldn't happen) provide end-turn fallback
+  if(choices.length===0){
+    const p = document.createElement('p');
+    p.className = 'small-muted';
+    p.textContent = 'No direct choices available — click End Turn.';
+    choicesEl.appendChild(p);
+  }
+
+  renderPortrait();
+}
+
+/* Apply an effect map to game properties */
+function applyEffect(effect){
+  if(!effect) return;
+  for(const k in effect){
+    if(typeof game[k] === 'number'){
+      game[k] = clamp(game[k] + effect[k]);
+    } else {
+      // unknown field - ignore
+    }
+  }
+}
+
+/* Random events based on risk: small chance each turn */
+function maybeEvent(){
+  const p = 0.12 + (game.risk / 220); // modest scaling
+  if(Math.random() < p){
+    const r = Math.random();
+    if(r < 0.28){
+      game.support = clamp(game.support - 8);
+      game.risk = clamp(game.risk + 6);
+      log('Local protests gain momentum in market squares.', 'Event');
+    } else if(r < 0.66){
+      game.economy = clamp(game.economy - 10);
+      game.risk = clamp(game.risk + 8);
+      log('Foreign tariff or market shock hits the sugar trade.', 'Event');
+    } else {
+      game.military = clamp(game.military + 12);
+      game.risk = clamp(game.risk + 12);
+      log('Foreign troops arrive under a claimed neutrality mandate.', 'Event');
+    }
+  }
+}
+
+/* Make a choice */
+function chooseOption(choice){
+  if(game.gameOver) return;
+  snapshot();
+  applyEffect(choice.effect);
+  // risk grows a bit relative to low support
+  game.risk = clamp(game.risk + Math.round((100 - game.support) / 28));
+  log(`Turn ${game.turn}: ${choice.label}`, 'Decision');
+  // advance turn (unless it's final)
+  if(game.turn < game.maxTurns){
+    game.turn++;
+  }
+  maybeEvent();
+  setUI();
+  if(game.turn > game.maxTurns) conclude();
+  else renderScene();
+}
+
+/* End turn button mirrors a passive turn advancement with small consequences */
+function endTurn(){
+  if(game.gameOver) return;
+  snapshot();
+  // passive deterioration based on low economy/land
+  if(game.economy < 30) game.support = clamp(game.support - 4);
+  if(game.land < 30) game.culture = clamp(game.culture - 5);
+  // risk increases slightly over time
+  game.risk = clamp(game.risk + 2);
+  log(`Turn ${game.turn}: End Turn (passive effects)`, 'Turn');
+
+  if(game.turn < game.maxTurns){
+    game.turn++;
+    maybeEvent();
+    setUI();
+    renderScene();
+  } else {
+    conclude();
+  }
+}
+
+/* Determine ending */
+function conclude(){
+  game.gameOver = true;
+  let ending = '';
+  // heuristics for endings; highlight key metrics
+  const r = game.risk;
+  const s = game.support;
+  const c = game.culture;
+  const e = game.economy;
+
+  if(r < 40 && s > 60 && c > 60){
+    ending = 'Preserved Monarchy';
+    log('The monarchy endures — cultural institutions protected.', 'Outcome');
+  } else if(e > 85 && c < 40){
+    ending = 'Business Dominance';
+    log('Economic power consolidates at the expense of cultural autonomy.', 'Outcome');
+  } else if(r < 65 && s >= 40){
+    ending = 'Compromised Sovereignty';
+    log('A negotiated compromise leaves partial sovereignty intact but with concessions.', 'Outcome');
+  } else if(r >= 65 && s < 40){
+    ending = 'Overthrow';
+    log('A forceful overthrow succeeds and control shifts.', 'Outcome');
+  } else {
+    // fallback
+    ending = 'Overthrow';
+    log('The situation tips into an overthrow scenario.', 'Outcome');
+  }
+
+  showEndingModal(ending);
+}
+
+/* Ending modal (simple alert for demo) */
+function showEndingModal(title){
+  alert('Ending: ' + title + '\\nCheck the turn log for event details.');
+}
+
+/* Undo support */
+function undo(){
+  if(!game.lastSnapshot) return;
+  game = JSON.parse(JSON.stringify(game.lastSnapshot));
+  game.lastSnapshot = null;
+  document.getElementById("undoBtn").disabled = true;
+  log('Undo applied.', 'System');
+  setUI();
+  renderScene();
+}
+
+/* Init / Start Game */
+document.querySelectorAll('[data-role]').forEach(btn => btn.addEventListener('click', e => {
+  startGame(e.currentTarget.dataset.role);
+}));
+
+function startGame(roleKey){
+  if(!ROLES[roleKey]) return;
+  game.roleKey = roleKey;
+  game.role = ROLES[roleKey];
+  // apply role modifiers initially
+  for(const k in game.role.modifiers){
+    if(typeof game[k] === 'number'){
+      game[k] = clamp(game[k] + game.role.modifiers[k]);
+    }
+  }
+  setupDiv.style.display = 'none';
+  gameArea.style.display = 'block';
+  game.turn = 1;
+  game.gameOver = false;
+  game.lastSnapshot = null;
+  document.getElementById("undoBtn").disabled = true;
+  log(`You selected: ${game.role.name}`, 'Role');
+  setUI();
+  renderScene();
+}
+
+/* Misc UI controls */
+document.getElementById("endTurn").onclick = () => endTurn();
+document.getElementById("undoBtn").onclick = () => undo();
+document.getElementById("restartBtn").onclick = () => location.reload();
+document.getElementById("inspectDoc").onclick = () => {
+  // Context-aware inspect: show what the 'document' rumor contents are depending on turn/role
+  const doc = (() => {
+    if(game.turn <= 2) return 'A proposed temporary transfer of authority has been drafted — details unclear.';
+    if(game.turn <= 8) return 'A formal draft circulated by a committee proposes limited transfer of executive power for "stability".';
+    return 'A final transfer proposal is pushing for implementation — urgent legal review required.';
+  })();
+  alert('Inspect Document:\\n' + doc);
+};
+document.getElementById("charSpeech").onclick = () => {
+  // short role-based lines
+  const lines = {
+    student: '"We must protect our schools and speak with one voice."',
+    business: '"Stability in trade keeps families fed."',
+    liliuokalani: '"I will do what I believe is right for the kingdom."',
+    official: '"We will seek the law and calm the people."'
+  };
+  narrativeEl.textContent = lines[game.roleKey] || '"We must maintain calm."';
+  setTimeout(() => renderScene(), 2600);
+};
+
+/* Start UI */
+setUI();
+log('Setup: Choose a character to begin.');
+
+</script>
+</body>
+</html>
